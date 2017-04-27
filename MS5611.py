@@ -8,6 +8,7 @@ import time
 
 #Device Address = 0x77
 addr = 0x77
+seaPressure = 1013.25
 
 # Get I2C bus
 i2c = onionI2C.OnionI2C()
@@ -98,7 +99,13 @@ pressure = ((((D1 * SENS) / 2097152) - OFF) / 32768.0) / 100.0
 cTemp = TEMP / 100.0
 fTemp = cTemp * 1.8 + 32
 
+#Get Altitude
+
+altitude = ((pow((seaPress / pressure), 1/5.257) - 1.0) * (cTemp + 273.15)) / 0.0065
+
 # Output data to screen
-print "Pressure : %.2f mbar" %pressure
-print "Temperature in Celsius : %.2f C" %cTemp
-print "Temperature in Fahrenheit : %.2f F" %fTemp
+print("Sea Pressure : %.2f mbar" %seaPressure)
+print("Pressure : %.2f mbar" %pressure)
+print("Temperature in Celsius : %.2f C" %cTemp)
+print("Temperature in Fahrenheit : %.2f F" %fTemp)
+print("Altitude in meters : %.2f m" %altitude)
