@@ -57,71 +57,84 @@ class LSM303(object):
         #I2C Bus init
         self._i2c = onionI2C.OnionI2C()
 
-        self.setup_acc(Scale_A)
-        self.setup_mag(Scale_M)
+        self.setup_acc()
+        self.setup_mag()
 
 
-    def setup_acc(self, SCALE):
+    def setup_acc(self):
         self._i2c.writeByte(LSM_ACC_ADDR, CTRL_REG1_A, POWER_ON)
-        self._i2c.writeByte(LSM_ACC_ADDR, CTRL_REG4_A, SCALE)
+        self._i2c.writeByte(LSM_ACC_ADDR, CTRL_REG4_A, self._Scale_A)
 
-        if(SCALE == SCALE_A_2G):
-            S = (-2.0/32768.0)
-        if(SCALE == SCALE_A_4G):
-            S = (-4.0/32768.0)
-        if(SCALE == SCALE_A_8G):
-            S = (-8.0/32768.0)
-        if(SCALE == SCALE_A_16G):
-            S = (-16.0/32768.0)
-        return S
+        if(self._Scale_A == SCALE_A_2G):
+            self._SA = (-2.0/32768.0)
+        if(self._Scale_A == SCALE_A_4G):
+            self._SA = (-4.0/32768.0)
+        if(self._Scale_A == SCALE_A_8G):
+            self._SA = (-8.0/32768.0)
+        if(self._Scale_A == SCALE_A_16G):
+            self._SA = (-16.0/32768.0)
+        return self._SA
 
 
-    def get_acc(self, S):
-        ax = 256*self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_H_A, 1)+self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_L_A, 1)
-        if(ax >= 32768 ):
-            ax = BitArray(bin(ax)).int
+    def get_acc(self):
+        ax1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_H_A, 1)
+        ax2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_L_A, 1)
+        ax = 256*ax1[0]+ ax2[0]
+        #if(ax >= 32768 ):
+        #    ax = BitArray(bin(ax)).int
 
-        ay = 256*self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_H_A, 1)+self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_L_A, 1)
-        if(ay >= 32768 ):
-            ay = BitArray(bin(ay)).int
+        ay1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_H_A, 1)
+        ay2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_L_A, 1)
 
-        az = 256*self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_H_A, 1)+self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_L_A, 1)
-        if(az >= 32768 ):
-            az = BitArray(bin(az)).int
-        return [S*ax,S*ay,S*az]
+        ay = 256*ay1 + ay2
+        #if(ay >= 32768 ):
+        #    ay = BitArray(bin(ay)).int
 
-    def setup_mag(self, SCALE):
+        az1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_H_A, 1)
+        az2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_L_A, 1)
+        az = 256*az1 + az2
+        #if(az >= 32768 ):
+        #    az = BitArray(bin(az)).int
+        return [self._SA*ax,self._SA*ay,self._SA*az]
+
+    def setup_mag(self):
         self._i2c.writeByte(LSM_MAG_ADDR, CRA_REG_M, DATA_RATE)
-        self._i2c.writeByte(LSM_MAG_ADDR, CRB_REG_M, SCALE)
+        self._i2c.writeByte(LSM_MAG_ADDR, CRB_REG_M, self._Scale_M)
         self._i2c.writeByte(LSM_MAG_ADDR, MR_REG_M, CONV_MODE)
 
-        if(SCALE == SCALE_M_13G):
-            S = (1.3/32768.0)
-        if(SCALE == SCALE_M_19G):
-            S = (1.9/32768.0)
-        if(SCALE == SCALE_M_25G):
-            S = (2.5/32768.0)
-        if(SCALE == SCALE_M_40G):
-            S = (4.0/32768.0)
-        if(SCALE == SCALE_M_47G):
-            S = (4.7/32768.0)
-        if(SCALE == SCALE_M_56G):
-            S = (5.6/32768.0)
-        if(SCALE == SCALE_M_81G):
-            S = (8.1/32768.0)
+        if(self._Scale_M == SCALE_M_13G):
+            self._SM = (1.3/32768.0)
+        if(self._Scale_M == SCALE_M_19G):
+            self._SM = (1.9/32768.0)
+        if(self._Scale_M == SCALE_M_25G):
+            self._SM = (2.5/32768.0)
+        if(self._Scale_M == SCALE_M_40G):
+            self._SM = (4.0/32768.0)
+        if(self._Scale_M == SCALE_M_47G):
+            self._SM = (4.7/32768.0)
+        if(self._Scale_M == SCALE_M_56G):
+            self._SM = (5.6/32768.0)
+        if(self._Scale_M == SCALE_M_81G):
+            self._SM = (8.1/32768.0)
 
-        return S
+        return self._SM
 
-    def get_mag(self, S):
-        mx = 256*self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_H_M, 1)+self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_L_M, 1)
-        if(mx >= 32768 ):
-            mx = BitArray(bin(mx)).int
+    def get_mag(self):
+        mx1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_H_M, 1)
+        mx2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_L_M, 1)
+        mx = 256*mx1 + mx2
+        #if(mx >= 32768 ):
+        #    mx = BitArray(bin(mx)).int
 
-        my = 256*self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_H_M, 1)+self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_L_M, 1)
-        if(my >= 32768 ):
-            my = BitArray(bin(my)).int
+        my1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_H_M, 1)
+        my2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_L_M, 1)
+        my = 256*my1 + my2
+        #if(my >= 32768 ):
+        #    my = BitArray(bin(my)).int
 
-        mz = 256*self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_H_M, 1)+self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_L_M, 1)
-        if(mz >= 32768 ):
-            mz = BitArray(bin(mz)).int
-        return [S*mx,S*my,S*mz]
+        mz1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_H_M, 1)
+        mz2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_L_M, 1)
+        mz = 256*mz1 + mz2
+        #if(mz >= 32768 ):
+        #    mz = BitArray(bin(mz)).int
+        return [self._SM*mx,self._SM*my,self._SM*mz]
