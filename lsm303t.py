@@ -80,16 +80,31 @@ class LSM303(object):
         ax1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_H_A, 1)
         ax2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_X_L_A, 1)
         ax = 256*ax1[0]+ ax2[0]
+        if ax >32768:
+            axR = (65535 - ax) * (-1)
+        else:
+            axR = ax
+        self._ax = axR * self._SA
 
         ay1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_H_A, 1)
         ay2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Y_L_A, 1)
         ay = 256*ay1[0] + ay2[0]
+        if ay >32768:
+            ayR = (65535 - ay) * (-1)
+        else:
+            ayR = ay
+        self._ay = ayR * self._SA
 
         az1 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_H_A, 1)
         az2 = self._i2c.readBytes(LSM_ACC_ADDR, OUT_Z_L_A, 1)
         az = 256*az1[0] + az2[0]
+        if az >32768:
+            azR = (65535 - az) * (-1)
+        else:
+            azR = az
+        self._az = azR * self._SA
 
-        return [self._SA*ax,self._SA*ay,self._SA*az]
+        return [self._ax, self._ay, self._az]
 
     def setup_mag(self):
         self._i2c.writeByte(LSM_MAG_ADDR, CRA_REG_M, DATA_RATE)
@@ -116,25 +131,56 @@ class LSM303(object):
     def get_mag(self):
         mx1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_H_M, 1)
         mx2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_X_L_M, 1)
-        self._mx = 256*mx1[0] + mx2[0]
+        mx = 256*mx1[0] + mx2[0]
+        if mx >32768:
+            mxR = (65535 - mx) * (-1)
+        else:
+            mxR = mx
+        self._mx = mxR * self._SM
 
         my1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_H_M, 1)
         my2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Y_L_M, 1)
-        self._my = 256*my1[0] + my2[0]
+        my = 256*my1[0] + my2[0]
+        if my >32768:
+            myR = (65535 - my) * (-1)
+        else:
+            myR = my
+        self._my = myR * self._SM
 
         mz1 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_H_M, 1)
         mz2 = self._i2c.readBytes(LSM_MAG_ADDR, OUT_Z_L_M, 1)
-        self._mz = 256*mz1[0] + mz2[0]
+        mz = 256*mz1[0] + mz2[0]
+        if mz >32768:
+            mzR = (65535 - mz) * (-1)
+        else:
+            mzR = mz
+        self._mz = mzR * self._SM
 
-        return [self._SM*self._mx,self._SM*self._my,self._SM*self._mz]
+        return [self._mx, self._my, self._mz]
 
     def getHeading(self):
-        float heading = 180*math.atan2(self._SM*self._my, self._SM*self._mx)/math.pi
+        heading = 180.0*math.atan2(self._my, self._mx)/math.pi
         if(heading < 0):
             heading += 360
 
         return heading
 
     
+
+    def getTiltHeading(self):
+        pitch = math.asin(-self._ax)
+        roll = math.asin(self._ay/math.cos(pitch))
+
+        xh = self._mx * math.cos(pitch) + self._mz * math.sin(pitch)
+        yh = self._mx * math.sin(roll) * math.sin(pitch) + self._my * math.cos(roll) - self._mz * math.sin(roll) * math.cos(pitch)
+        zh = -self._mx * math.cos(roll) * math.sin(pitch) + self._my * math.sin(roll) + self._mz * math.cos(roll) * math.cos(pitch)
+
+        heading = 180.0 * math.atan2(yh, xh)/math.pi
+        if (yh >= 0):
+            return heading
+        else:
+            return (360 + heading)
+        
+                         
         
         
